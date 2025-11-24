@@ -50,7 +50,8 @@ DASH_PARSERS = vp9 opus
 FFMPEG_DASH_BC = build/ffmpeg-dash/ffmpeg.bc
 
 MKVE_DEMUXERS = matroska mov avi
-MKVE_MUXERS = matroska mp4 srt ass sup webvtt dvd vob flac mp3 null
+MKVE_MUXERS = matroska mp4 mov srt ass sup webvtt dvd vob flac mp3 wav null
+MKVE_ENCODERS = aac libmp3lame
 FFMPEG_MKVE_BC = build/ffmpeg-mkve/ffmpeg.o
 FFMPEG_MKVE_FFPROBE_BC = build/ffmpeg-mkve/ffprobe.o
 
@@ -114,12 +115,11 @@ build/libvpx/dist/lib/libvpx.so:
 	emmake make install
 
 build/lame/dist/lib/libmp3lame.so:
-	cd build/lame/lame && \
+	cd build/lame && \
 	git reset --hard && \
-	patch -p2 < ../../lame-fix-ld.patch && \
 	emconfigure ./configure \
 		CFLAGS="-DNDEBUG -O3" \
-		--prefix="$$(pwd)/../dist" \
+		--prefix="$$(pwd)/dist" \
 		--host=x86-none-linux \
 		--disable-static \
 		\
@@ -282,23 +282,31 @@ build/ffmpeg-dash/ffmpeg.bc:
 		&& \
 	emmake make -j EXESUF=.bc
 
-build/ffmpeg-mkve/ffmpeg.o:
+FFMPEG_MKVE_BC = build/ffmpeg-mkve/ffmpeg.o
+FFMPEG_MKVE_FFPROBE_BC = build/ffmpeg-mkve/ffprobe.o
+FFMPEG_MKVE_PC_PATH = ../lame/dist/lib/pkgconfig
+MKVE_SHARED_DEPS = \
+	build/lame/dist/lib/libmp3lame.so
+
+build/ffmpeg-mkve/ffmpeg.o: $(MKVE_SHARED_DEPS)
 	cd build/ffmpeg-mkve && \
 	git reset --hard && \
 	patch -p1 < ../ffmpeg-async-io.patch && \
-	patch -p1 < ../ffmpeg-async-exit.patch && \
 	patch -p1 < ../ffmpeg-pthread-exit.patch && \
-	emconfigure ./configure \
+	EM_PKG_CONFIG_PATH=$(FFMPEG_MKVE_PC_PATH) emconfigure ./configure \
 		$(FFMPEG_COMMON_CORE_ARGS) \
 		$(addprefix --enable-demuxer=,$(MKVE_DEMUXERS)) \
 		$(addprefix --enable-muxer=,$(MKVE_MUXERS)) \
+		$(addprefix --enable-encoder=,$(MKVE_ENCODERS)) \
 		--disable-avfilter \
 		--disable-swresample \
 		--disable-swscale \
 		--enable-ffprobe \
 		--disable-zlib \
 		--enable-protocol=file \
-		--extra-ldflags="-r" \
+		--enable-libmp3lame \
+		--extra-cflags="-s USE_ZLIB=1 -I../lame/dist/include" \
+		--extra-ldflags="-r -L../lame/dist/lib" \
 		&& \
 	emmake make -j EXESUF=.o
 
@@ -365,7 +373,7 @@ ffmpeg-worker-dash.js ffmpeg-worker-dash.wasm: $(FFMPEG_DASH_BC) $(PRE_JS) $(POS
 	        -s 'ASYNCIFY_IMPORTS=["emscripten_read_async", "emscripten_close_async", "emscripten_exit_async"]'
 
 ffmpeg-worker-mkve.js ffmpeg-worker-mkve.wasm: $(FFMPEG_MKVE_BC) $(PRE_JS) $(POST_JS_WORKER)
-	emcc $(FFMPEG_MKVE_BC) \
+	emcc $(FFMPEG_MKVE_BC) $(MKVE_SHARED_DEPS) \
 		--post-js $(POST_JS_WORKER) \
 		$(EMCC_COMMON_CORE_ARGS) \
 		-pthread \
