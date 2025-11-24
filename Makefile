@@ -49,9 +49,10 @@ DASH_FILTERS =
 DASH_PARSERS = vp9 opus
 FFMPEG_DASH_BC = build/ffmpeg-dash/ffmpeg.bc
 
-MKVE_DEMUXERS = matroska mov avi
+MKVE_DEMUXERS = matroska mov avi wav
 MKVE_MUXERS = matroska mp4 mov srt ass sup webvtt dvd vob flac mp3 wav null
-MKVE_ENCODERS = aac libmp3lame
+MKVE_DECODERS = pcm_s16le pcm_s8 pcm_u8 pcm_alaw pcm_mulaw aac mp3
+MKVE_ENCODERS = aac libmp3lame pcm_s16le pcm_s8 pcm_u8 pcm_alaw pcm_mulaw
 FFMPEG_MKVE_BC = build/ffmpeg-mkve/ffmpeg.o
 FFMPEG_MKVE_FFPROBE_BC = build/ffmpeg-mkve/ffprobe.o
 
@@ -297,6 +298,7 @@ build/ffmpeg-mkve/ffmpeg.o: $(MKVE_SHARED_DEPS)
 		$(FFMPEG_COMMON_CORE_ARGS) \
 		$(addprefix --enable-demuxer=,$(MKVE_DEMUXERS)) \
 		$(addprefix --enable-muxer=,$(MKVE_MUXERS)) \
+		$(addprefix --enable-decoder=,$(MKVE_DECODERS)) \
 		$(addprefix --enable-encoder=,$(MKVE_ENCODERS)) \
 		--disable-avfilter \
 		--disable-swresample \
