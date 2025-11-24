@@ -291,8 +291,8 @@ MKVE_SHARED_DEPS = \
 build/ffmpeg-mkve/ffmpeg.o: $(MKVE_SHARED_DEPS)
 	cd build/ffmpeg-mkve && \
 	git reset --hard && \
-	patch -p1 < ../ffmpeg-async-io.patch && \
-	patch -p1 < ../ffmpeg-pthread-exit.patch && \
+	(patch -p1 < ../ffmpeg-async-io.patch || true) && \
+	(patch -p1 < ../ffmpeg-pthread-exit.patch || true) && \
 	EM_PKG_CONFIG_PATH=$(FFMPEG_MKVE_PC_PATH) emconfigure ./configure \
 		$(FFMPEG_COMMON_CORE_ARGS) \
 		$(addprefix --enable-demuxer=,$(MKVE_DEMUXERS)) \
