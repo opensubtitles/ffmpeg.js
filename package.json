@@ -8,7 +8,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Kagami/ffmpeg.js.git"
+    "url": "git+https://github.com/opensubtitles/ffmpeg.js.git"
   },
   "keywords": [
     "asm.js",
