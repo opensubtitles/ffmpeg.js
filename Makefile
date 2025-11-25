@@ -53,8 +53,8 @@ MKVE_DEMUXERS = matroska mov avi wav
 MKVE_MUXERS = matroska mp4 mov srt ass sup webvtt dvd vob flac mp3 wav null
 MKVE_DECODERS = pcm_s16le pcm_s8 pcm_u8 pcm_alaw pcm_mulaw aac mp3
 MKVE_ENCODERS = aac libmp3lame pcm_s16le pcm_s8 pcm_u8 pcm_alaw pcm_mulaw
-FFMPEG_MKVE_BC = build/ffmpeg-mkve/ffmpeg.o
-FFMPEG_MKVE_FFPROBE_BC = build/ffmpeg-mkve/ffprobe.o
+FFMPEG_MKVE_BC = build/ffmpeg-mkve/ffmpeg.bc
+FFMPEG_MKVE_FFPROBE_BC = build/ffmpeg-mkve/ffprobe.bc
 
 all: webm mp4 hls dash mkve
 webm: ffmpeg-webm.js ffmpeg-worker-webm.js
@@ -283,13 +283,13 @@ build/ffmpeg-dash/ffmpeg.bc:
 		&& \
 	emmake make -j EXESUF=.bc
 
-FFMPEG_MKVE_BC = build/ffmpeg-mkve/ffmpeg.o
-FFMPEG_MKVE_FFPROBE_BC = build/ffmpeg-mkve/ffprobe.o
+FFMPEG_MKVE_BC = build/ffmpeg-mkve/ffmpeg.bc
+FFMPEG_MKVE_FFPROBE_BC = build/ffmpeg-mkve/ffprobe.bc
 FFMPEG_MKVE_PC_PATH = ../lame/dist/lib/pkgconfig
 MKVE_SHARED_DEPS = \
 	build/lame/dist/lib/libmp3lame.so
 
-build/ffmpeg-mkve/ffmpeg.o: $(MKVE_SHARED_DEPS)
+build/ffmpeg-mkve/ffmpeg.bc: $(MKVE_SHARED_DEPS)
 	cd build/ffmpeg-mkve && \
 	git reset --hard && \
 	(patch -p1 < ../ffmpeg-async-io.patch || true) && \
@@ -310,7 +310,11 @@ build/ffmpeg-mkve/ffmpeg.o: $(MKVE_SHARED_DEPS)
 		--extra-cflags="-s USE_ZLIB=1 -I../lame/dist/include" \
 		--extra-ldflags="-r -L../lame/dist/lib" \
 		&& \
-	emmake make -j EXESUF=.o
+	emmake make -j EXESUF=.bc
+
+build/ffmpeg-mkve/ffprobe.bc: build/ffmpeg-mkve/ffmpeg.bc
+	cd build/ffmpeg-mkve && \
+	emmake make ffprobe EXESUF=.bc
 
 EMCC_COMMON_CORE_ARGS = \
 	-O3 \
